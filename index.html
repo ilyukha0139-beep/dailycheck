@@ -175,6 +175,37 @@
   .empty-state{text-align:center;padding:3rem;color:var(--muted);}
   .empty-icon{font-size:32px;margin-bottom:8px;}
 
+  /* DAILY TASKS */
+  .daily-section{margin:16px 28px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;}
+  .daily-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap;}
+  .daily-title{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text);text-transform:uppercase;}
+  .daily-meta{font-size:11px;color:var(--muted);}
+  .daily-reset{font-size:11px;color:var(--muted);background:none;border:1px solid var(--border2);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:var(--font-body);transition:all .15s;}
+  .daily-reset:hover{color:var(--accent);border-color:var(--accent);}
+  .daily-add-btn{background:none;border:1px dashed var(--border2);color:var(--muted);border-radius:var(--r);padding:5px 12px;font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .15s;}
+  .daily-add-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-dim);}
+  .daily-progress{margin-bottom:14px;}
+  .daily-progress-track{background:var(--surface2);border-radius:4px;height:4px;overflow:hidden;}
+  .daily-progress-fill{height:100%;border-radius:4px;background:var(--green);transition:width .4s ease;}
+  .daily-progress-lbl{font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;}
+  .daily-grid{display:flex;flex-direction:column;gap:6px;}
+  .daily-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);transition:all .15s;}
+  .daily-item.all-done{border-color:rgba(80,216,144,0.2);background:rgba(80,216,144,0.04);}
+  .daily-item:hover{border-color:var(--border2);}
+  .daily-check-wrap{display:flex;gap:6px;align-items:center;}
+  .daily-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border2);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s;flex-shrink:0;}
+  .daily-check.checked{background:var(--green);border-color:var(--green);color:#0b0b0d;}
+  .daily-check:hover{border-color:var(--green);}
+  .daily-task-name{flex:1;font-size:13px;color:var(--text);line-height:1.35;}
+  .daily-task-name.done-text{text-decoration:line-through;color:var(--muted);}
+  .daily-who-checks{display:flex;gap:4px;margin-left:auto;}
+  .who-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;opacity:.4;transition:opacity .15s;}
+  .who-dot.done-who{opacity:1;}
+  .daily-del{background:none;border:none;cursor:pointer;color:transparent;font-size:12px;padding:2px 4px;transition:color .15s;flex-shrink:0;}
+  .daily-item:hover .daily-del{color:var(--muted);}
+  .daily-del:hover{color:var(--red)!important;}
+  .daily-empty{text-align:center;padding:20px;color:var(--muted);font-size:13px;}
+
   /* MODALS */
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center;}
   .modal-overlay.open{display:flex;}
@@ -300,6 +331,29 @@
       <div class="bar-chart" id="bar-chart"></div>
     </div>
 
+
+    <!-- ЕЖЕДНЕВНЫЕ ЗАДАЧИ -->
+    <div class="daily-section">
+      <div class="daily-head">
+        <div>
+          <div class="daily-title">☀️ Ежедневные задачи</div>
+          <div class="daily-meta" id="daily-meta">Сбрасываются каждый день в 9:00</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="daily-reset" onclick="resetMyDaily()">Сбросить мои ✓</button>
+          <button class="daily-add-btn" onclick="openDailyModal()">＋ Добавить задачу</button>
+        </div>
+      </div>
+      <div class="daily-progress">
+        <div class="daily-progress-lbl">
+          <span id="daily-progress-lbl">Выбери себя чтобы отмечать</span>
+          <span id="daily-progress-pct"></span>
+        </div>
+        <div class="daily-progress-track"><div class="daily-progress-fill" id="daily-progress-fill" style="width:0%"></div></div>
+      </div>
+      <div class="daily-grid" id="daily-grid"></div>
+    </div>
+
     <div class="content">
       <div class="status-bar">
         <div class="s-chip active" onclick="setStatusFilter('all',this)">Все</div>
@@ -340,6 +394,21 @@
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('task-modal')">Отмена</button>
       <button class="btn-save" onclick="saveTask()">Создать задачу</button>
+    </div>
+  </div>
+</div>
+
+<!-- DAILY MODAL -->
+<div class="modal-overlay" id="daily-modal" onclick="onOverlay(event,'daily-modal')">
+  <div class="modal-box" style="width:360px">
+    <div class="modal-head">
+      <span class="modal-title">Новая ежедневная задача</span>
+      <button class="modal-close" onclick="closeModal('daily-modal')">✕</button>
+    </div>
+    <div class="form-row"><label>Название задачи</label><input type="text" id="df-name" placeholder="Например: Проверить почту" /></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('daily-modal')">Отмена</button>
+      <button class="btn-save" onclick="saveDailyTask()">Добавить</button>
     </div>
   </div>
 </div>
@@ -423,7 +492,7 @@ async function loadAll(){
       api('GET','staff?order=id.asc&select=*')
     ]);
     setSyncStatus('ok');
-    renderWhoami();renderStaff();render();renderGoal();renderChart();
+    renderWhoami();renderStaff();render();renderGoal();renderChart();renderDaily();
   }catch(e){setSyncStatus('error');toast('Не удалось загрузить данные',true);}
 }
 setInterval(loadAll,15000);
@@ -447,6 +516,7 @@ function onWhoamiChange(){
   localStorage.setItem('whoami',whoami);
   updateWhoamiHint();
   render();
+  renderDaily();
 }
 
 function updateWhoamiHint(){
@@ -669,7 +739,143 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 function onOverlay(e,id){if(e.target.id===id)closeModal(id);}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('task-modal');closeModal('staff-modal');closeModal('goal-modal');}});
 
+
+// ============ ЕЖЕДНЕВНЫЕ ЗАДАЧИ ============
+// Хранятся в localStorage: список задач + кто что отметил сегодня
+
+function getDailyStorageKey() {
+  // Ключ по дате + час (сброс каждый день в 9:00)
+  const now = new Date();
+  const h = now.getHours();
+  const dateStr = now.toISOString().slice(0,10);
+  // Если сейчас раньше 9:00 — считаем что это ещё "вчерашний" день
+  if (h < 9) {
+    const prev = new Date(now); prev.setDate(prev.getDate()-1);
+    return 'daily_checks_' + prev.toISOString().slice(0,10);
+  }
+  return 'daily_checks_' + dateStr;
+}
+
+function getDailyTasks() {
+  try { return JSON.parse(localStorage.getItem('daily_tasks_list') || '[]'); } catch(e) { return []; }
+}
+function saveDailyTasks(list) {
+  localStorage.setItem('daily_tasks_list', JSON.stringify(list));
+}
+function getDailyChecks() {
+  try { return JSON.parse(localStorage.getItem(getDailyStorageKey()) || '{}'); } catch(e) { return {}; }
+}
+function saveDailyChecks(checks) {
+  localStorage.setItem(getDailyStorageKey(), JSON.stringify(checks));
+}
+
+function renderDaily() {
+  const dailyList = getDailyTasks();
+  const checks = getDailyChecks(); // { taskId: ['Алексей', 'Берта'] }
+  const grid = document.getElementById('daily-grid');
+
+  if (!dailyList.length) {
+    grid.innerHTML = '<div class="daily-empty">Нет ежедневных задач — добавь первую ↑</div>';
+    document.getElementById('daily-progress-lbl').textContent = 'Задач пока нет';
+    document.getElementById('daily-progress-pct').textContent = '';
+    document.getElementById('daily-progress-fill').style.width = '0%';
+    return;
+  }
+
+  // Прогресс текущего пользователя
+  const myChecks = whoami ? dailyList.filter(t => (checks[t.id]||[]).includes(whoami)) : [];
+  const myTotal = whoami ? dailyList.length : 0;
+  const myPct = myTotal ? Math.round(myChecks.length/myTotal*100) : 0;
+
+  if (whoami) {
+    document.getElementById('daily-progress-lbl').textContent = `Выполнено сегодня: ${myChecks.length} из ${myTotal}`;
+    document.getElementById('daily-progress-pct').textContent = myPct + '%';
+    document.getElementById('daily-progress-fill').style.width = myPct + '%';
+  } else {
+    document.getElementById('daily-progress-lbl').textContent = 'Выбери себя чтобы отмечать';
+    document.getElementById('daily-progress-pct').textContent = '';
+    document.getElementById('daily-progress-fill').style.width = '0%';
+  }
+
+  grid.innerHTML = dailyList.map(t => {
+    const doneBy = checks[t.id] || [];
+    const iDone = whoami && doneBy.includes(whoami);
+    const allDone = staff.length > 0 && staff.every(s => doneBy.includes(s.name));
+    const whoDots = staff.map(s => {
+      const m = getStaffMeta(s.name);
+      const done = doneBy.includes(s.name);
+      return `<div class="who-dot ${m.cls}${done ? ' done-who' : ''}" title="${s.name}: ${done ? '✓ выполнено' : 'не выполнено'}">${m.ini}</div>`;
+    }).join('');
+    return `<div class="daily-item${allDone ? ' all-done' : ''}">
+      <button class="daily-check${iDone ? ' checked' : ''}" onclick="toggleDailyCheck('${t.id}')" ${!whoami?'disabled title=\"Выбери себя\""':'title="Нажми чтобы отметить"'}>${iDone ? '✓' : ''}</button>
+      <span class="daily-task-name${iDone ? ' done-text' : ''}">${t.name}</span>
+      <div class="daily-who-checks">${whoDots}</div>
+      <button class="daily-del" onclick="deleteDailyTask('${t.id}')" title="Удалить задачу">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function toggleDailyCheck(taskId) {
+  if (!whoami) { toast('Сначала выбери себя в боковой панели', true); return; }
+  const checks = getDailyChecks();
+  if (!checks[taskId]) checks[taskId] = [];
+  const idx = checks[taskId].indexOf(whoami);
+  if (idx === -1) { checks[taskId].push(whoami); }
+  else { checks[taskId].splice(idx, 1); }
+  saveDailyChecks(checks);
+  renderDaily();
+}
+
+function resetMyDaily() {
+  if (!whoami) { toast('Сначала выбери себя', true); return; }
+  if (!confirm('Сбросить все свои отметки на сегодня?')) return;
+  const checks = getDailyChecks();
+  Object.keys(checks).forEach(k => {
+    checks[k] = checks[k].filter(n => n !== whoami);
+  });
+  saveDailyChecks(checks);
+  renderDaily();
+  toast('Отметки сброшены');
+}
+
+function openDailyModal() {
+  document.getElementById('df-name').value = '';
+  document.getElementById('daily-modal').classList.add('open');
+  setTimeout(() => document.getElementById('df-name').focus(), 50);
+}
+
+function saveDailyTask() {
+  const name = document.getElementById('df-name').value.trim();
+  if (!name) { document.getElementById('df-name').focus(); return; }
+  const list = getDailyTasks();
+  list.push({ id: Date.now().toString(), name });
+  saveDailyTasks(list);
+  closeModal('daily-modal');
+  renderDaily();
+  toast('Задача добавлена ✓');
+}
+
+function deleteDailyTask(id) {
+  if (!confirm('Удалить ежедневную задачу?')) return;
+  const list = getDailyTasks().filter(t => t.id !== id);
+  saveDailyTasks(list);
+  // Убрать из checks
+  const checks = getDailyChecks();
+  delete checks[id];
+  saveDailyChecks(checks);
+  renderDaily();
+  toast('Задача удалена');
+}
+
+// Авто-сброс в 9:00: проверяем каждую минуту
+let lastDailyKey = getDailyStorageKey();
+setInterval(() => {
+  const newKey = getDailyStorageKey();
+  if (newKey !== lastDailyKey) { lastDailyKey = newKey; renderDaily(); toast('☀️ Новый день! Ежедневные задачи сброшены'); }
+}, 60000);
+
 loadAll();
+renderDaily();
 </script>
 </body>
 </html>
