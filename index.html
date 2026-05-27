@@ -492,7 +492,8 @@ async function loadAll(){
       api('GET','staff?order=id.asc&select=*')
     ]);
     setSyncStatus('ok');
-    renderWhoami();renderStaff();render();renderGoal();renderChart();renderDaily();
+    renderWhoami();renderStaff();render();renderGoal();renderChart();
+    loadDaily();
   }catch(e){setSyncStatus('error');toast('Не удалось загрузить данные',true);}
 }
 setInterval(loadAll,15000);
@@ -516,7 +517,7 @@ function onWhoamiChange(){
   localStorage.setItem('whoami',whoami);
   updateWhoamiHint();
   render();
-  renderDaily();
+  renderDaily();  // re-render with new whoami context
 }
 
 function updateWhoamiHint(){
@@ -741,40 +742,37 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('task-mo
 
 
 // ============ ЕЖЕДНЕВНЫЕ ЗАДАЧИ ============
-// Хранятся в localStorage: список задач + кто что отметил сегодня
 
-function getDailyStorageKey() {
-  // Ключ по дате + час (сброс каждый день в 9:00)
+let dailyTasks = [];   // [{id, name}]
+let dailyChecks = [];  // [{id, task_id, who, check_date}]
+
+const todayDate = () => new Date().toISOString().slice(0, 10);
+
+// Определяем "сегодня" с учётом сброса в 9:00
+function getDailyDate() {
   const now = new Date();
-  const h = now.getHours();
-  const dateStr = now.toISOString().slice(0,10);
-  // Если сейчас раньше 9:00 — считаем что это ещё "вчерашний" день
-  if (h < 9) {
-    const prev = new Date(now); prev.setDate(prev.getDate()-1);
-    return 'daily_checks_' + prev.toISOString().slice(0,10);
+  if (now.getHours() < 9) {
+    const prev = new Date(now);
+    prev.setDate(prev.getDate() - 1);
+    return prev.toISOString().slice(0, 10);
   }
-  return 'daily_checks_' + dateStr;
+  return todayDate();
 }
 
-function getDailyTasks() {
-  try { return JSON.parse(localStorage.getItem('daily_tasks_list') || '[]'); } catch(e) { return []; }
-}
-function saveDailyTasks(list) {
-  localStorage.setItem('daily_tasks_list', JSON.stringify(list));
-}
-function getDailyChecks() {
-  try { return JSON.parse(localStorage.getItem(getDailyStorageKey()) || '{}'); } catch(e) { return {}; }
-}
-function saveDailyChecks(checks) {
-  localStorage.setItem(getDailyStorageKey(), JSON.stringify(checks));
+async function loadDaily() {
+  try {
+    const d = getDailyDate();
+    [dailyTasks, dailyChecks] = await Promise.all([
+      api('GET', 'daily_tasks?order=id.asc&select=*'),
+      api('GET', `daily_checks?check_date=eq.${d}&select=*`)
+    ]);
+    renderDaily();
+  } catch(e) { console.error('daily load error', e); }
 }
 
 function renderDaily() {
-  const dailyList = getDailyTasks();
-  const checks = getDailyChecks(); // { taskId: ['Алексей', 'Берта'] }
   const grid = document.getElementById('daily-grid');
-
-  if (!dailyList.length) {
+  if (!dailyTasks.length) {
     grid.innerHTML = '<div class="daily-empty">Нет ежедневных задач — добавь первую ↑</div>';
     document.getElementById('daily-progress-lbl').textContent = 'Задач пока нет';
     document.getElementById('daily-progress-pct').textContent = '';
@@ -782,13 +780,13 @@ function renderDaily() {
     return;
   }
 
-  // Прогресс текущего пользователя
-  const myChecks = whoami ? dailyList.filter(t => (checks[t.id]||[]).includes(whoami)) : [];
-  const myTotal = whoami ? dailyList.length : 0;
-  const myPct = myTotal ? Math.round(myChecks.length/myTotal*100) : 0;
+  const myDone = whoami ? dailyTasks.filter(t =>
+    dailyChecks.some(c => c.task_id === t.id && c.who === whoami)
+  ).length : 0;
+  const myPct = whoami ? Math.round(myDone / dailyTasks.length * 100) : 0;
 
   if (whoami) {
-    document.getElementById('daily-progress-lbl').textContent = `Выполнено сегодня: ${myChecks.length} из ${myTotal}`;
+    document.getElementById('daily-progress-lbl').textContent = `Выполнено сегодня: ${myDone} из ${dailyTasks.length}`;
     document.getElementById('daily-progress-pct').textContent = myPct + '%';
     document.getElementById('daily-progress-fill').style.width = myPct + '%';
   } else {
@@ -797,8 +795,8 @@ function renderDaily() {
     document.getElementById('daily-progress-fill').style.width = '0%';
   }
 
-  grid.innerHTML = dailyList.map(t => {
-    const doneBy = checks[t.id] || [];
+  grid.innerHTML = dailyTasks.map(t => {
+    const doneBy = dailyChecks.filter(c => c.task_id === t.id).map(c => c.who);
     const iDone = whoami && doneBy.includes(whoami);
     const allDone = staff.length > 0 && staff.every(s => doneBy.includes(s.name));
     const whoDots = staff.map(s => {
@@ -807,35 +805,40 @@ function renderDaily() {
       return `<div class="who-dot ${m.cls}${done ? ' done-who' : ''}" title="${s.name}: ${done ? '✓ выполнено' : 'не выполнено'}">${m.ini}</div>`;
     }).join('');
     return `<div class="daily-item${allDone ? ' all-done' : ''}">
-      <button class="daily-check${iDone ? ' checked' : ''}" onclick="toggleDailyCheck('${t.id}')" ${!whoami?'disabled title=\"Выбери себя\""':'title="Нажми чтобы отметить"'}>${iDone ? '✓' : ''}</button>
+      <button class="daily-check${iDone ? ' checked' : ''}" onclick="toggleDailyCheck(${t.id})" ${!whoami ? 'disabled title="Выбери себя"' : 'title="Нажми чтобы отметить"'}>${iDone ? '✓' : ''}</button>
       <span class="daily-task-name${iDone ? ' done-text' : ''}">${t.name}</span>
       <div class="daily-who-checks">${whoDots}</div>
-      <button class="daily-del" onclick="deleteDailyTask('${t.id}')" title="Удалить задачу">✕</button>
+      <button class="daily-del" onclick="deleteDailyTask(${t.id})" title="Удалить задачу">✕</button>
     </div>`;
   }).join('');
 }
 
-function toggleDailyCheck(taskId) {
+async function toggleDailyCheck(taskId) {
   if (!whoami) { toast('Сначала выбери себя в боковой панели', true); return; }
-  const checks = getDailyChecks();
-  if (!checks[taskId]) checks[taskId] = [];
-  const idx = checks[taskId].indexOf(whoami);
-  if (idx === -1) { checks[taskId].push(whoami); }
-  else { checks[taskId].splice(idx, 1); }
-  saveDailyChecks(checks);
-  renderDaily();
+  const d = getDailyDate();
+  const existing = dailyChecks.find(c => c.task_id === taskId && c.who === whoami);
+  try {
+    if (existing) {
+      await api('DELETE', `daily_checks?id=eq.${existing.id}`);
+      dailyChecks = dailyChecks.filter(c => c.id !== existing.id);
+    } else {
+      const res = await api('POST', 'daily_checks', { task_id: taskId, who: whoami, check_date: d });
+      dailyChecks.push(res[0]);
+    }
+    renderDaily();
+  } catch(e) { toast('Ошибка', true); }
 }
 
-function resetMyDaily() {
+async function resetMyDaily() {
   if (!whoami) { toast('Сначала выбери себя', true); return; }
   if (!confirm('Сбросить все свои отметки на сегодня?')) return;
-  const checks = getDailyChecks();
-  Object.keys(checks).forEach(k => {
-    checks[k] = checks[k].filter(n => n !== whoami);
-  });
-  saveDailyChecks(checks);
-  renderDaily();
-  toast('Отметки сброшены');
+  try {
+    const d = getDailyDate();
+    await api('DELETE', `daily_checks?who=eq.${encodeURIComponent(whoami)}&check_date=eq.${d}`);
+    dailyChecks = dailyChecks.filter(c => c.who !== whoami);
+    renderDaily();
+    toast('Отметки сброшены');
+  } catch(e) { toast('Ошибка', true); }
 }
 
 function openDailyModal() {
@@ -844,38 +847,34 @@ function openDailyModal() {
   setTimeout(() => document.getElementById('df-name').focus(), 50);
 }
 
-function saveDailyTask() {
+async function saveDailyTask() {
   const name = document.getElementById('df-name').value.trim();
   if (!name) { document.getElementById('df-name').focus(); return; }
-  const list = getDailyTasks();
-  list.push({ id: Date.now().toString(), name });
-  saveDailyTasks(list);
-  closeModal('daily-modal');
-  renderDaily();
-  toast('Задача добавлена ✓');
+  try {
+    const res = await api('POST', 'daily_tasks', { name });
+    dailyTasks.push(res[0]);
+    closeModal('daily-modal');
+    renderDaily();
+    toast('Задача добавлена ✓');
+  } catch(e) { toast('Ошибка сохранения', true); }
 }
 
-function deleteDailyTask(id) {
-  if (!confirm('Удалить ежедневную задачу?')) return;
-  const list = getDailyTasks().filter(t => t.id !== id);
-  saveDailyTasks(list);
-  // Убрать из checks
-  const checks = getDailyChecks();
-  delete checks[id];
-  saveDailyChecks(checks);
-  renderDaily();
-  toast('Задача удалена');
+async function deleteDailyTask(id) {
+  if (!confirm('Удалить ежедневную задачу для всей команды?')) return;
+  try {
+    await api('DELETE', `daily_tasks?id=eq.${id}`);
+    dailyTasks = dailyTasks.filter(t => t.id !== id);
+    dailyChecks = dailyChecks.filter(c => c.task_id !== id);
+    renderDaily();
+    toast('Задача удалена');
+  } catch(e) { toast('Ошибка', true); }
 }
 
-// Авто-сброс в 9:00: проверяем каждую минуту
-let lastDailyKey = getDailyStorageKey();
-setInterval(() => {
-  const newKey = getDailyStorageKey();
-  if (newKey !== lastDailyKey) { lastDailyKey = newKey; renderDaily(); toast('☀️ Новый день! Ежедневные задачи сброшены'); }
-}, 60000);
+// Авто-обновление ежедневных задач каждые 15 сек
+setInterval(loadDaily, 15000);
 
 loadAll();
-renderDaily();
+loadDaily();
 </script>
 </body>
 </html>
