@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Дневник команды</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;700&family=Onest:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0e0e10;--surface:#18181c;--surface2:#222228;
+    --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+    --text:#f0f0f2;--muted:#7a7a88;
+    --accent:#c8f135;--accent-dim:rgba(200,241,53,0.12);
+    --red:#ff5656;--amber:#ffb340;--blue:#5b9cf6;--green:#50d890;
+    --font-head:'Unbounded',sans-serif;--font-body:'Onest',sans-serif;
+    --r:10px;--r-lg:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;min-height:100vh;}
+  .layout{display:grid;grid-template-columns:230px 1fr;min-height:100vh;}
+
+  /* SIDEBAR */
+  .sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+  .logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);}
+  .logo-title{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;}
+  .logo-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+  /* кто я */
+  .whoami-block{padding:12px 8px;border-bottom:1px solid var(--border);}
+  .whoami-label{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding:0 4px;margin-bottom:6px;}
+  .whoami-select{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font-body);font-size:13px;border-radius:var(--r);padding:8px 10px;outline:none;appearance:none;cursor:pointer;}
+  .whoami-select:focus{border-color:var(--accent);}
+  .whoami-select option{background:#222228;}
+  .whoami-hint{font-size:11px;color:var(--muted);padding:4px 4px 0;line-height:1.4;}
+
+  .nav-section{padding:14px 12px 6px;font-size:10px;font-weight:500;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--r);margin:1px 8px;cursor:pointer;color:var(--muted);font-size:13px;transition:all .15s;user-select:none;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:var(--accent-dim);color:var(--accent);}
+  .nav-item .count{margin-left:auto;font-size:11px;background:var(--surface2);padding:1px 7px;border-radius:20px;color:var(--muted);}
+  .nav-item.active .count{background:var(--accent-dim);color:var(--accent);}
+  .nav-item .free-badge{margin-left:auto;font-size:10px;background:rgba(255,179,64,0.2);color:var(--amber);padding:1px 7px;border-radius:20px;}
+
+  .staff-block{border-top:1px solid var(--border);padding:8px 0 12px;margin-top:auto;}
+  .staff-item{display:flex;align-items:center;gap:9px;padding:7px 12px;margin:1px 8px;border-radius:var(--r);cursor:pointer;transition:all .15s;}
+  .staff-item:hover{background:var(--surface2);}
+  .staff-item.active{background:var(--accent-dim);}
+  .staff-name{font-size:13px;color:var(--text);flex:1;}
+  .staff-item.active .staff-name{color:var(--accent);}
+  .del-staff{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px 4px;border-radius:4px;transition:all .15s;opacity:0;}
+  .staff-item:hover .del-staff{opacity:1;}
+  .del-staff:hover{color:var(--red)!important;background:rgba(255,86,86,0.1);}
+  .avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;}
+  .av-0{background:rgba(91,156,246,0.2);color:#5b9cf6;}
+  .av-1{background:rgba(80,216,144,0.2);color:#50d890;}
+  .av-2{background:rgba(255,179,64,0.2);color:#ffb340;}
+  .av-3{background:rgba(200,241,53,0.2);color:#c8f135;}
+  .av-4{background:rgba(255,86,86,0.2);color:#ff5656;}
+  .add-staff-btn{display:flex;align-items:center;gap:8px;padding:7px 12px;margin:2px 8px;border-radius:var(--r);cursor:pointer;color:var(--muted);font-size:12px;border:1px dashed var(--border2);background:none;font-family:var(--font-body);transition:all .15s;width:calc(100% - 16px);}
+  .add-staff-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-dim);}
+
+  /* MAIN */
+  .main{display:flex;flex-direction:column;}
+  .topbar{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg);position:sticky;top:0;z-index:10;}
+  .topbar-title{font-family:var(--font-head);font-size:13px;font-weight:500;color:var(--text);flex:1;}
+  .topbar-date{font-size:12px;color:var(--muted);}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+  .sync-dot.loading{background:var(--amber);animation:pulse 1s infinite;}
+  .sync-dot.error{background:var(--red);}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .search-wrap{position:relative;}
+  .search-wrap input{background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--font-body);font-size:13px;border-radius:var(--r);padding:7px 12px 7px 32px;width:190px;outline:none;transition:border .15s;}
+  .search-wrap input:focus{border-color:var(--accent);}
+  .search-wrap input::placeholder{color:var(--muted);}
+  .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none;}
+  .btn-add{background:var(--accent);color:#0e0e10;border:none;border-radius:var(--r);padding:8px 16px;font-family:var(--font-head);font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .15s;white-space:nowrap;}
+  .btn-add:hover{opacity:.88;}
+
+  /* STATS */
+  .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;border-bottom:1px solid var(--border);background:var(--border);}
+  .stat-box{background:var(--bg);padding:16px 24px;}
+  .stat-num{font-family:var(--font-head);font-size:26px;font-weight:700;color:var(--text);line-height:1;}
+  .stat-num.accent{color:var(--accent);}
+  .stat-num.green{color:var(--green);}
+  .stat-num.red{color:var(--red);}
+  .stat-num.amber{color:var(--amber);}
+  .stat-lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+
+  /* GOAL */
+  .goal-banner{margin:20px 28px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;}
+  .goal-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px;flex-wrap:wrap;}
+  .goal-title{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text);text-transform:uppercase;}
+  .goal-meta{font-size:12px;color:var(--muted);}
+  .goal-right{display:flex;align-items:baseline;gap:6px;}
+  .goal-current{font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--accent);line-height:1;}
+  .goal-sep{font-size:16px;color:var(--muted);}
+  .goal-target-lbl{font-family:var(--font-head);font-size:18px;font-weight:500;color:var(--muted);}
+  .goal-pct{font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--accent);margin-left:8px;}
+  .goal-edit-btn{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:var(--r);padding:5px 12px;font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .15s;margin-left:10px;}
+  .goal-edit-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-dim);}
+  .progress-track{background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;margin-top:4px;}
+  .progress-fill{height:100%;border-radius:4px;background:var(--accent);transition:width .6s cubic-bezier(.4,0,.2,1);}
+  .progress-fill.over{background:var(--green);}
+  .goal-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+  .breakdown-item{text-align:center;}
+  .breakdown-name{font-size:11px;color:var(--muted);margin-bottom:4px;}
+  .breakdown-val{font-family:var(--font-head);font-size:16px;font-weight:700;}
+  .breakdown-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+
+  /* CHART */
+  .chart-section{margin:16px 28px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;}
+  .chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .chart-title{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text);text-transform:uppercase;}
+  .chart-tabs{display:flex;gap:4px;}
+  .chart-tab{padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:none;color:var(--muted);font-family:var(--font-body);font-size:11px;cursor:pointer;transition:all .15s;}
+  .chart-tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+  .bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .bar-wrap{width:100%;display:flex;align-items:flex-end;height:60px;}
+  .bar{width:100%;border-radius:4px 4px 0 0;background:var(--accent);opacity:.7;transition:all .3s;min-height:2px;}
+  .bar:hover{opacity:1;}
+  .bar-lbl{font-size:10px;color:var(--muted);white-space:nowrap;}
+  .bar-val{font-size:10px;color:var(--accent);font-weight:500;}
+
+  /* CONTENT */
+  .content{padding:20px 28px;flex:1;}
+  .status-bar{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+  .s-chip{padding:5px 14px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font-body);font-size:12px;transition:all .15s;}
+  .s-chip:hover{color:var(--text);background:var(--surface);}
+  .s-chip.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+  .s-chip.free-chip{border-color:rgba(255,179,64,0.4);color:var(--amber);}
+  .s-chip.free-chip.active{background:rgba(255,179,64,0.15);border-color:var(--amber);}
+
+  .group-label{font-size:10px;font-weight:500;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin:20px 0 8px;}
+  .group-label:first-child{margin-top:0;}
+
+  /* TASK CARD */
+  .task-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:6px;display:grid;grid-template-columns:3px 1fr auto;gap:12px;align-items:start;transition:border-color .15s;}
+  .task-card:hover{border-color:var(--border2);background:var(--surface2);}
+  .task-card.done-card{opacity:.45;}
+  .task-card.free-card{border-color:rgba(255,179,64,0.25);background:rgba(255,179,64,0.03);}
+  .task-card.free-card:hover{border-color:rgba(255,179,64,0.5);}
+  .prio-line{border-radius:4px;align-self:stretch;min-height:36px;}
+  .prio-line.high{background:var(--red);}
+  .prio-line.mid{background:var(--amber);}
+  .prio-line.low{background:var(--muted);}
+  .task-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;line-height:1.35;}
+  .task-note{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.4;}
+  .task-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .tag{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
+  .tag-notebook{background:rgba(91,156,246,0.15);color:#5b9cf6;}
+  .tag-monitor{background:rgba(80,216,144,0.15);color:#50d890;}
+  .tag-lego{background:rgba(255,179,64,0.15);color:#ffb340;}
+  .tag-general{background:rgba(122,122,136,0.15);color:#a0a0b0;}
+  .tag-free{background:rgba(255,179,64,0.15);color:var(--amber);font-style:italic;}
+  .tag-who{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);}
+  .av-sm{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;}
+  .task-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+  .status-pill{font-size:11px;padding:3px 10px;border-radius:20px;cursor:pointer;font-weight:500;border:1px solid transparent;transition:all .15s;white-space:nowrap;user-select:none;}
+  .status-pill:hover{filter:brightness(1.2);}
+  .sp-new{background:rgba(122,122,136,0.15);color:#a0a0b0;border-color:rgba(122,122,136,0.3);}
+  .sp-progress{background:rgba(91,156,246,0.15);color:#5b9cf6;border-color:rgba(91,156,246,0.3);}
+  .sp-wait{background:rgba(255,179,64,0.15);color:#ffb340;border-color:rgba(255,179,64,0.3);}
+  .sp-done{background:rgba(200,241,53,0.15);color:var(--accent);border-color:rgba(200,241,53,0.3);}
+
+  /* кнопка ВЗЯТЬ ЗАДАЧУ */
+  .btn-take{background:rgba(255,179,64,0.15);border:1px solid rgba(255,179,64,0.4);color:var(--amber);border-radius:var(--r);padding:5px 12px;font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .15s;white-space:nowrap;font-weight:500;}
+  .btn-take:hover{background:rgba(255,179,64,0.25);border-color:var(--amber);}
+  /* кнопка ОТПУСТИТЬ */
+  .btn-release{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:var(--r);padding:4px 10px;font-family:var(--font-body);font-size:11px;cursor:pointer;transition:all .15s;}
+  .btn-release:hover{color:var(--red);border-color:var(--red);}
+
+  .del-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px;transition:color .15s;line-height:1;}
+  .del-btn:hover{color:var(--red);}
+  .empty-state{text-align:center;padding:3rem;color:var(--muted);}
+  .empty-icon{font-size:32px;margin-bottom:8px;}
+
+  /* SYNC STATUS */
+  .sync-section{margin:16px 28px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;}
+  .sync-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap;}
+  .sync-title{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text);text-transform:uppercase;}
+  .sync-refresh{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:var(--r);padding:5px 12px;font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .15s;}
+  .sync-refresh:hover{color:var(--accent);border-color:var(--accent);}
+  .sync-now-btn{background:var(--accent);color:#0e0e10;border:none;border-radius:var(--r);padding:5px 14px;font-family:var(--font-head);font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:opacity .15s;}
+  .sync-now-btn:hover{opacity:.85;}
+  .sync-now-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .sync-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+  .sync-card{background:var(--surface2);border-radius:var(--r);padding:12px 14px;border:1px solid var(--border);}
+  .sync-cat{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px;}
+  .sync-status{font-size:12px;margin-bottom:2px;}
+  .sync-time{font-size:11px;color:var(--muted);}
+  .sync-never{font-size:12px;color:var(--muted);text-align:center;padding:16px;}
+
+  /* DAILY TASKS */
+  .daily-section{margin:16px 28px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;}
+  .daily-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap;}
+  .daily-title{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text);text-transform:uppercase;}
+  .daily-meta{font-size:11px;color:var(--muted);}
+  .daily-reset{font-size:11px;color:var(--muted);background:none;border:1px solid var(--border2);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:var(--font-body);transition:all .15s;}
+  .daily-reset:hover{color:var(--accent);border-color:var(--accent);}
+  .daily-add-btn{background:none;border:1px dashed var(--border2);color:var(--muted);border-radius:var(--r);padding:5px 12px;font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .15s;}
+  .daily-add-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-dim);}
+  .daily-progress{margin-bottom:14px;}
+  .daily-progress-track{background:var(--surface2);border-radius:4px;height:4px;overflow:hidden;}
+  .daily-progress-fill{height:100%;border-radius:4px;background:var(--green);transition:width .4s ease;}
+  .daily-progress-lbl{font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;}
+  .daily-grid{display:flex;flex-direction:column;gap:6px;}
+  .daily-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);transition:all .15s;}
+  .daily-item.all-done{border-color:rgba(80,216,144,0.2);background:rgba(80,216,144,0.04);}
+  .daily-item:hover{border-color:var(--border2);}
+  .daily-check-wrap{display:flex;gap:6px;align-items:center;}
+  .daily-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border2);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s;flex-shrink:0;}
+  .daily-check.checked{background:var(--green);border-color:var(--green);color:#0b0b0d;}
+  .daily-check:hover{border-color:var(--green);}
+  .daily-task-name{flex:1;font-size:13px;color:var(--text);line-height:1.35;}
+  .daily-task-name.done-text{text-decoration:line-through;color:var(--muted);}
+  .daily-who-checks{display:flex;gap:4px;margin-left:auto;}
+  .who-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;opacity:.4;transition:opacity .15s;}
+  .who-dot.done-who{opacity:1;}
+  .daily-del{background:none;border:none;cursor:pointer;color:transparent;font-size:12px;padding:2px 4px;transition:color .15s;flex-shrink:0;}
+  .daily-item:hover .daily-del{color:var(--muted);}
+  .daily-del:hover{color:var(--red)!important;}
+  .daily-empty{text-align:center;padding:20px;color:var(--muted);font-size:13px;}
+
+  /* WEEKLY TASKS */
+  .weekly-section{margin:16px 28px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;}
+  .weekly-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap;}
+  .weekly-title{font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text);text-transform:uppercase;}
+  .weekly-meta{font-size:11px;color:var(--muted);}
+  .weekly-reset{font-size:11px;color:var(--muted);background:none;border:1px solid var(--border2);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:var(--font-body);transition:all .15s;}
+  .weekly-reset:hover{color:var(--accent);border-color:var(--accent);}
+  .weekly-add-btn{background:none;border:1px dashed var(--border2);color:var(--muted);border-radius:var(--r);padding:5px 12px;font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .15s;}
+  .weekly-add-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-dim);}
+  .weekly-progress{margin-bottom:14px;}
+  .weekly-progress-track{background:var(--surface2);border-radius:4px;height:4px;overflow:hidden;}
+  .weekly-progress-fill{height:100%;border-radius:4px;background:var(--blue);transition:width .4s ease;}
+  .weekly-progress-lbl{font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;}
+  .weekly-grid{display:flex;flex-direction:column;gap:6px;}
+  .weekly-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);transition:all .15s;}
+  .weekly-item.all-done{border-color:rgba(91,156,246,0.2);background:rgba(91,156,246,0.04);}
+  .weekly-item:hover{border-color:var(--border2);}
+  .weekly-check{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border2);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s;flex-shrink:0;}
+  .weekly-check.checked{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .weekly-check:hover{border-color:var(--blue);}
+  .weekly-task-name{flex:1;font-size:13px;color:var(--text);line-height:1.35;}
+  .weekly-task-name.done-text{text-decoration:line-through;color:var(--muted);}
+  .weekly-who-checks{display:flex;gap:4px;margin-left:auto;}
+  .weekly-del{background:none;border:none;cursor:pointer;color:transparent;font-size:12px;padding:2px 4px;transition:color .15s;flex-shrink:0;}
+  .weekly-item:hover .weekly-del{color:var(--muted);}
+  .weekly-del:hover{color:var(--red)!important;}
+  .weekly-empty{text-align:center;padding:20px;color:var(--muted);font-size:13px;}
+
+  /* MODALS */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal-box{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r-lg);padding:24px;width:460px;max-width:95vw;animation:modal-in .2s ease;}
+  @keyframes modal-in{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+  .modal-title{font-family:var(--font-head);font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--text);text-transform:uppercase;}
+  .modal-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;transition:color .15s;}
+  .modal-close:hover{color:var(--text);}
+  .form-row{margin-bottom:14px;}
+  .form-row label{display:block;font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;}
+  .form-row input,.form-row select,.form-row textarea{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font-body);font-size:13px;border-radius:var(--r);padding:9px 12px;outline:none;transition:border .15s;appearance:none;}
+  .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--accent);}
+  .form-row textarea{height:70px;resize:vertical;}
+  .form-row select option{background:#222228;}
+  .form-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+  .btn-cancel{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:var(--r);padding:8px 18px;font-family:var(--font-body);font-size:13px;cursor:pointer;transition:all .15s;}
+  .btn-cancel:hover{color:var(--text);background:var(--surface2);}
+  .btn-save{background:var(--accent);border:none;color:#0e0e10;border-radius:var(--r);padding:8px 20px;font-family:var(--font-head);font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer;transition:opacity .15s;text-transform:uppercase;}
+  .btn-save:hover{opacity:.88;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:10px 16px;font-size:13px;color:var(--text);z-index:200;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateY(0);}
+  ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-title">WorkDiary</div>
+      <div class="logo-sub" id="logo-sub">Синхронизация...</div>
+    </div>
+
+    <!-- КТО Я -->
+    <div class="whoami-block">
+      <div class="whoami-label">Я — сотрудник</div>
+      <select class="whoami-select" id="whoami" onchange="onWhoamiChange()">
+        <option value="">— выбери себя —</option>
+      </select>
+      <div class="whoami-hint" id="whoami-hint"></div>
+    </div>
+
+    <div class="nav-section">Категории</div>
+    <div class="nav-item active" onclick="setFilter('cat','all',this)">
+      <span>📋</span> Все задачи <span class="count" id="cnt-all">—</span>
+    </div>
+    <div class="nav-item" onclick="setFilter('cat','Ноутбуки',this)">
+      <span style="color:#5b9cf6">💻</span> Ноутбуки <span class="count" id="cnt-notebooks">—</span>
+    </div>
+    <div class="nav-item" onclick="setFilter('cat','Мониторы',this)">
+      <span style="color:#50d890">🖥️</span> Мониторы <span class="count" id="cnt-monitors">—</span>
+    </div>
+    <div class="nav-item" onclick="setFilter('cat','Лего',this)">
+      <span style="color:#ffb340">🧱</span> Лего <span class="count" id="cnt-lego">—</span>
+    </div>
+    <div class="nav-item" onclick="setFilter('cat','Общее',this)">
+      <span style="color:#a0a0b0">📁</span> Общее <span class="count" id="cnt-general">—</span>
+    </div>
+    <div class="nav-item" onclick="setFilter('cat','free',this)">
+      <span>🆓</span> Свободные <span class="free-badge" id="cnt-free">—</span>
+    </div>
+
+    <div class="staff-block">
+      <div class="nav-section" style="padding-top:8px">Сотрудники</div>
+      <div class="staff-item active" onclick="setFilter('who','all',this)" id="si-all">
+        <div class="avatar" style="background:rgba(200,241,53,0.15);color:var(--accent);font-size:9px">ВСЕ</div>
+        <span class="staff-name">Все сотрудники</span>
+      </div>
+      <div id="staff-list"></div>
+      <button class="add-staff-btn" onclick="openStaffModal()">＋ Добавить сотрудника</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Все задачи</div>
+      <span class="topbar-date" id="topbar-date"></span>
+      <div class="sync-dot loading" id="sync-dot"></div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-inp" placeholder="Поиск..." oninput="render()" />
+      </div>
+      <button class="btn-add" onclick="openTaskModal()">+ Создать задачу</button>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-box"><div class="stat-num" id="s-total">—</div><div class="stat-lbl">Всего задач</div></div>
+      <div class="stat-box"><div class="stat-num amber" id="s-free">—</div><div class="stat-lbl">Свободных</div></div>
+      <div class="stat-box"><div class="stat-num green" id="s-done">—</div><div class="stat-lbl">Выполнено за месяц</div></div>
+      <div class="stat-box"><div class="stat-num red" id="s-urgent">—</div><div class="stat-lbl">Срочных</div></div>
+    </div>
+
+    <!-- ЦЕЛЬ -->
+    <div class="goal-banner">
+      <div class="goal-top">
+        <div>
+          <div class="goal-title">🎯 Цель месяца — выполненные задачи</div>
+          <div class="goal-meta" id="goal-period"></div>
+        </div>
+        <div class="goal-right">
+          <span class="goal-current" id="goal-current">0</span>
+          <span class="goal-sep">/</span>
+          <span class="goal-target-lbl" id="goal-target-lbl">30</span>
+          <span class="goal-pct" id="goal-pct">0%</span>
+          <button class="goal-edit-btn" onclick="openGoalModal()">Изменить цель</button>
+        </div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="goal-bar" style="width:0%"></div></div>
+      <div class="goal-breakdown" id="goal-breakdown"></div>
+    </div>
+
+    <!-- ГРАФИК -->
+    <div class="chart-section">
+      <div class="chart-head">
+        <div class="chart-title">📊 Выполнено по дням</div>
+        <div class="chart-tabs">
+          <button class="chart-tab active" onclick="setChartPeriod(7,this)">7 дней</button>
+          <button class="chart-tab" onclick="setChartPeriod(14,this)">14 дней</button>
+          <button class="chart-tab" onclick="setChartPeriod(30,this)">30 дней</button>
+        </div>
+      </div>
+      <div class="bar-chart" id="bar-chart"></div>
+    </div>
+
+
+    <!-- СТАТУС СИНХРОНИЗАЦИИ -->
+    <div class="sync-section">
+      <div class="sync-head">
+        <div class="sync-title">🔄 Синхронизация с Ньюмарт</div>
+        <button class="sync-refresh" onclick="loadSyncLog()">Обновить</button>
+        <button class="sync-now-btn" id="sync-now-btn" onclick="triggerSync()">⚡ Синхронизировать сейчас</button>
+      </div>
+      <div id="sync-status-grid"><div class="sync-never">Загрузка...</div></div>
+    </div>
+
+    <!-- ЕЖЕДНЕВНЫЕ ЗАДАЧИ -->
+    <div class="daily-section">
+      <div class="daily-head">
+        <div>
+          <div class="daily-title">☀️ Ежедневные задачи</div>
+          <div class="daily-meta" id="daily-meta">Сбрасываются каждый день в 9:00</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="daily-reset" onclick="resetMyDaily()">Сбросить мои ✓</button>
+          <button class="daily-add-btn" onclick="openDailyModal()">＋ Добавить задачу</button>
+        </div>
+      </div>
+      <div class="daily-progress">
+        <div class="daily-progress-lbl">
+          <span id="daily-progress-lbl">Выбери себя чтобы отмечать</span>
+          <span id="daily-progress-pct"></span>
+        </div>
+        <div class="daily-progress-track"><div class="daily-progress-fill" id="daily-progress-fill" style="width:0%"></div></div>
+      </div>
+      <div class="daily-grid" id="daily-grid"></div>
+    </div>
+
+    <!-- ЕЖЕНЕДЕЛЬНЫЕ ЗАДАЧИ -->
+    <div class="weekly-section">
+      <div class="weekly-head">
+        <div>
+          <div class="weekly-title">📅 Еженедельные задачи</div>
+          <div class="weekly-meta" id="weekly-meta">Сбрасываются каждый понедельник</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="weekly-reset" onclick="resetMyWeekly()">Сбросить мои ✓</button>
+          <button class="weekly-add-btn" onclick="openWeeklyModal()">＋ Добавить задачу</button>
+        </div>
+      </div>
+      <div class="weekly-progress">
+        <div class="weekly-progress-lbl">
+          <span id="weekly-progress-lbl">Выбери себя чтобы отмечать</span>
+          <span id="weekly-progress-pct"></span>
+        </div>
+        <div class="weekly-progress-track"><div class="weekly-progress-fill" id="weekly-progress-fill" style="width:0%"></div></div>
+      </div>
+      <div class="weekly-grid" id="weekly-grid"></div>
+    </div>
+
+    <div class="content">
+      <div class="status-bar">
+        <div class="s-chip active" onclick="setStatusFilter('all',this)">Все</div>
+        <div class="s-chip free-chip" onclick="setStatusFilter('free',this)">🆓 Свободные</div>
+        <div class="s-chip" onclick="setStatusFilter('Новая',this)">Новая</div>
+        <div class="s-chip" onclick="setStatusFilter('В работе',this)">В работе</div>
+        <div class="s-chip" onclick="setStatusFilter('Ожидание',this)">Ожидание</div>
+        <div class="s-chip" onclick="setStatusFilter('Готово',this)">Готово</div>
+      </div>
+      <div id="task-list"></div>
+    </div>
+  </main>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-overlay" id="task-modal" onclick="onOverlay(event,'task-modal')">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title">Создать задачу</span>
+      <button class="modal-close" onclick="closeModal('task-modal')">✕</button>
+    </div>
+    <div class="form-row"><label>Название</label><input type="text" id="f-title" placeholder="Что нужно сделать?" /></div>
+    <div class="form-row"><label>Заметка</label><textarea id="f-note" placeholder="Детали, контакты, комментарий..."></textarea></div>
+    <div class="form-2col">
+      <div class="form-row">
+        <label>Категория</label>
+        <select id="f-cat"><option>Ноутбуки</option><option>Мониторы</option><option>Лего</option><option>Общее</option></select>
+      </div>
+      <div class="form-row">
+        <label>Приоритет</label>
+        <select id="f-prio"><option>Высокий</option><option>Средний</option><option>Низкий</option></select>
+      </div>
+    </div>
+    <div class="form-row"><label>Дата</label><input type="date" id="f-date" /></div>
+    <div class="form-row" style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;">
+      <div style="font-size:12px;color:var(--muted);">💡 Сотрудник не назначается при создании — каждый сам берёт задачу из списка свободных.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('task-modal')">Отмена</button>
+      <button class="btn-save" onclick="saveTask()">Создать задачу</button>
+    </div>
+  </div>
+</div>
+
+<!-- DAILY MODAL -->
+<div class="modal-overlay" id="daily-modal" onclick="onOverlay(event,'daily-modal')">
+  <div class="modal-box" style="width:360px">
+    <div class="modal-head">
+      <span class="modal-title">Новая ежедневная задача</span>
+      <button class="modal-close" onclick="closeModal('daily-modal')">✕</button>
+    </div>
+    <div class="form-row"><label>Название задачи</label><input type="text" id="df-name" placeholder="Например: Проверить почту" /></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('daily-modal')">Отмена</button>
+      <button class="btn-save" onclick="saveDailyTask()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEEKLY MODAL -->
+<div class="modal-overlay" id="weekly-modal" onclick="onOverlay(event,'weekly-modal')">
+  <div class="modal-box" style="width:360px">
+    <div class="modal-head">
+      <span class="modal-title">Новая еженедельная задача</span>
+      <button class="modal-close" onclick="closeModal('weekly-modal')">✕</button>
+    </div>
+    <div class="form-row"><label>Название задачи</label><input type="text" id="wf-name" placeholder="Например: Отчёт за неделю" /></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('weekly-modal')">Отмена</button>
+      <button class="btn-save" onclick="saveWeeklyTask()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAFF MODAL -->
+<div class="modal-overlay" id="staff-modal" onclick="onOverlay(event,'staff-modal')">
+  <div class="modal-box" style="width:340px">
+    <div class="modal-head">
+      <span class="modal-title">Новый сотрудник</span>
+      <button class="modal-close" onclick="closeModal('staff-modal')">✕</button>
+    </div>
+    <div class="form-row"><label>Имя</label><input type="text" id="sf-name" placeholder="Имя сотрудника" /></div>
+    <div class="form-row"><label>Инициалы (2–3 буквы)</label><input type="text" id="sf-initials" placeholder="ИВ" maxlength="3" style="text-transform:uppercase" /></div>
+    <div class="form-row"><label>Цвет аватара</label>
+      <select id="sf-color"><option value="0">Синий</option><option value="1">Зелёный</option><option value="2">Жёлтый</option><option value="3">Лаймовый</option><option value="4">Красный</option></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('staff-modal')">Отмена</button>
+      <button class="btn-save" onclick="saveStaff()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<!-- GOAL MODAL -->
+<div class="modal-overlay" id="goal-modal" onclick="onOverlay(event,'goal-modal')">
+  <div class="modal-box" style="width:320px">
+    <div class="modal-head">
+      <span class="modal-title">Цель месяца</span>
+      <button class="modal-close" onclick="closeModal('goal-modal')">✕</button>
+    </div>
+    <div class="form-row"><label>Сколько задач выполнить за месяц?</label><input type="number" id="gf-target" min="1" max="999" placeholder="30" /></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('goal-modal')">Отмена</button>
+      <button class="btn-save" onclick="saveGoal()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL='https://wctwvoavdyopprwnqwxf.supabase.co';
+const SB_KEY='sb_publishable_a8-LQuzmx7wOkWp4vGs-ew_nUk8YRdv';
+const HEADERS={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
+const STATUSES=['Новая','В работе','Ожидание','Готово'];
+const CAT_CLS={Ноутбуки:'tag-notebook',Мониторы:'tag-monitor',Лего:'tag-lego',Общее:'tag-general'};
+const ST_CLS={Новая:'sp-new','В работе':'sp-progress',Ожидание:'sp-wait',Готово:'sp-done'};
+const PRIO_CLS={Высокий:'high',Средний:'mid',Низкий:'low'};
+
+let tasks=[],staff=[];
+let filCat='all',filWho='all',filStatus='all';
+let chartDays=7;
+let goalTarget=parseInt(localStorage.getItem('goal_target')||'30');
+let whoami=localStorage.getItem('whoami')||'';
+
+const today=()=>new Date().toISOString().slice(0,10);
+const fmtDate=d=>{if(d===today())return'Сегодня';return new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'long'});};
+const monthStart=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),1).toISOString().slice(0,10);};
+const monthName=()=>new Date().toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
+
+function setSyncStatus(s){
+  document.getElementById('sync-dot').className='sync-dot'+(s==='ok'?'':s==='loading'?' loading':' error');
+  document.getElementById('logo-sub').textContent=s==='ok'?'Синхронизировано ✓':s==='loading'?'Загрузка...':'Ошибка соединения';
+}
+function toast(msg,isErr=false){
+  const t=document.getElementById('toast');t.textContent=(isErr?'⚠️ ':'')+msg;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);
+}
+async function api(method,path,body){
+  const res=await fetch(SB_URL+'/rest/v1/'+path,{method,headers:HEADERS,body:body?JSON.stringify(body):undefined});
+  if(!res.ok){const e=await res.text();throw new Error(e);}
+  if(res.status===204)return null;
+  return res.json();
+}
+
+async function loadAll(){
+  setSyncStatus('loading');
+  try{
+    [tasks,staff]=await Promise.all([
+      api('GET','tasks?order=date.desc,id.desc&select=*'),
+      api('GET','staff?order=id.asc&select=*')
+    ]);
+    setSyncStatus('ok');
+    renderWhoami();renderStaff();render();renderGoal();renderChart();
+    loadDaily();
+    loadSyncLog();
+  }catch(e){setSyncStatus('error');toast('Не удалось загрузить данные',true);}
+}
+setInterval(loadAll,15000);
+
+function getStaffMeta(name){
+  const s=staff.find(x=>x.name===name);
+  return s?{ini:s.initials,cls:'av-'+s.color}:{ini:'??',cls:'av-0'};
+}
+
+function renderWhoami(){
+  const sel=document.getElementById('whoami');
+  const cur=sel.value||whoami;
+  sel.innerHTML='<option value="">— выбери себя —</option>'+
+    staff.map(s=>`<option value="${s.name}"${s.name===cur?' selected':''}>${s.name}</option>`).join('');
+  sel.value=cur;
+  updateWhoamiHint();
+}
+
+function onWhoamiChange(){
+  whoami=document.getElementById('whoami').value;
+  localStorage.setItem('whoami',whoami);
+  updateWhoamiHint();
+  render();
+  renderDaily();  // re-render with new whoami context
+}
+
+function updateWhoamiHint(){
+  const hint=document.getElementById('whoami-hint');
+  if(whoami){
+    const mine=tasks.filter(t=>t.who===whoami&&t.status!=='Готово').length;
+    const free=tasks.filter(t=>!t.who).length;
+    hint.textContent=`Твоих задач: ${mine} · Свободных: ${free}`;
+    hint.style.color='var(--muted)';
+  } else {
+    hint.textContent='Выбери себя чтобы брать задачи';
+    hint.style.color='var(--amber)';
+  }
+}
+
+function renderStaff(){
+  const sel=document.getElementById('f-who');if(sel){const cur=sel.value;sel.innerHTML=staff.map(s=>`<option${s.name===cur?' selected':''}>${s.name}</option>`).join('');}
+  document.getElementById('staff-list').innerHTML=staff.map(s=>{
+    const m=getStaffMeta(s.name);
+    return`<div class="staff-item${filWho===s.name?' active':''}" onclick="setFilter('who','${s.name}',this)">
+      <div class="avatar ${m.cls}">${m.ini}</div>
+      <span class="staff-name">${s.name}</span>
+      <button class="del-staff" onclick="deleteStaff(event,${s.id},'${s.name}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderGoal(){
+  const ms=monthStart();
+  const doneTasks=tasks.filter(t=>t.status==='Готово'&&t.date>=ms);
+  const current=doneTasks.length;
+  const pct=Math.min(Math.round(current/goalTarget*100),100);
+  document.getElementById('goal-period').textContent=monthName();
+  document.getElementById('goal-current').textContent=current;
+  document.getElementById('goal-target-lbl').textContent=goalTarget;
+  document.getElementById('goal-pct').textContent=pct+'%';
+  const bar=document.getElementById('goal-bar');
+  bar.style.width=pct+'%';
+  bar.className='progress-fill'+(current>=goalTarget?' over':'');
+  const bd=document.getElementById('goal-breakdown');
+  if(staff.length){
+    bd.innerHTML=staff.map(s=>{
+      const cnt=doneTasks.filter(t=>t.who===s.name).length;
+      const m=getStaffMeta(s.name);
+      return`<div class="breakdown-item">
+        <div class="breakdown-name"><span class="av-sm ${m.cls}" style="display:inline-flex;margin-right:4px">${m.ini}</span>${s.name}</div>
+        <div class="breakdown-val" style="color:var(--accent)">${cnt}</div>
+        <div class="breakdown-sub">выполнено</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function setChartPeriod(days,el){
+  chartDays=days;
+  document.querySelectorAll('.chart-tab').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');renderChart();
+}
+function renderChart(){
+  const days=[];
+  for(let i=chartDays-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  const counts=days.map(d=>tasks.filter(t=>t.status==='Готово'&&t.date===d).length);
+  const maxVal=Math.max(...counts,1);
+  document.getElementById('bar-chart').innerHTML=days.map((d,i)=>{
+    const h=Math.round((counts[i]/maxVal)*60);
+    const lbl=new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'numeric'});
+    const isToday=d===today();
+    return`<div class="bar-col">
+      <div class="bar-val">${counts[i]||''}</div>
+      <div class="bar-wrap"><div class="bar" style="height:${h||2}px;opacity:${isToday?1:.6};${isToday?'background:var(--green)':''}"></div></div>
+      <div class="bar-lbl" style="${isToday?'color:var(--accent)':''}">${lbl}</div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(type,val,el){
+  if(type==='cat'){filCat=val;document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));el.classList.add('active');document.getElementById('page-title').textContent=val==='all'?'Все задачи':val==='free'?'Свободные задачи':val;}
+  if(type==='who'){filWho=val;document.querySelectorAll('.staff-item').forEach(x=>x.classList.remove('active'));el.classList.add('active');}
+  render();
+}
+function setStatusFilter(val,el){filStatus=val;document.querySelectorAll('.s-chip').forEach(x=>x.classList.remove('active'));el.classList.add('active');render();}
+
+function render(){
+  document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
+  const free=tasks.filter(t=>!t.who);
+  document.getElementById('cnt-all').textContent=tasks.length;
+  document.getElementById('cnt-notebooks').textContent=tasks.filter(t=>t.cat==='Ноутбуки').length;
+  document.getElementById('cnt-monitors').textContent=tasks.filter(t=>t.cat==='Мониторы').length;
+  document.getElementById('cnt-lego').textContent=tasks.filter(t=>t.cat==='Лего').length;
+  document.getElementById('cnt-general').textContent=tasks.filter(t=>t.cat==='Общее').length;
+  document.getElementById('cnt-free').textContent=free.length;
+  const ms=monthStart();
+  document.getElementById('s-total').textContent=tasks.length;
+  document.getElementById('s-free').textContent=free.length;
+  document.getElementById('s-done').textContent=tasks.filter(t=>t.status==='Готово'&&t.date>=ms).length;
+  document.getElementById('s-urgent').textContent=tasks.filter(t=>t.priority==='Высокий'&&t.status!=='Готово').length;
+  updateWhoamiHint();
+
+  const q=document.getElementById('search-inp').value.toLowerCase();
+  let vis=tasks.filter(t=>{
+    if(filCat==='free') return !t.who;
+    if(filCat!=='all'&&t.cat!==filCat)return false;
+    if(filWho!=='all'&&t.who!==filWho)return false;
+    if(filStatus==='free')return !t.who;
+    if(filStatus!=='all'&&t.status!==filStatus)return false;
+    if(q&&!t.title.toLowerCase().includes(q)&&!(t.note||'').toLowerCase().includes(q))return false;
+    return true;
+  });
+
+  const list=document.getElementById('task-list');
+  if(!vis.length){list.innerHTML=`<div class="empty-state"><div class="empty-icon">📭</div><div style="font-size:13px;color:var(--muted)">Задач не найдено</div></div>`;return;}
+  const groups={};
+  vis.forEach(t=>{if(!groups[t.date])groups[t.date]=[];groups[t.date].push(t);});
+  let html='';
+  Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(date=>{
+    html+=`<div class="group-label">${fmtDate(date)}</div>`;
+    groups[date].forEach(t=>{
+      const isFree=!t.who;
+      const m=isFree?null:getStaffMeta(t.who);
+      const canTake=isFree&&whoami;
+      const canRelease=t.who===whoami&&t.status!=='Готово';
+      html+=`<div class="task-card${t.status==='Готово'?' done-card':''}${isFree?' free-card':''}">
+        <div class="prio-line ${PRIO_CLS[t.priority]||'low'}"></div>
+        <div>
+          <div class="task-title">${t.title}</div>
+          ${t.note?`<div class="task-note">${t.note}</div>`:''}
+          <div class="task-tags">
+            <span class="tag ${CAT_CLS[t.cat]||'tag-general'}">${t.cat}</span>
+            ${isFree
+              ?`<span class="tag tag-free">🆓 Свободная</span>`
+              :`<span class="tag-who"><span class="av-sm ${m.cls}">${m.ini}</span>${t.who}</span>`
+            }
+          </div>
+        </div>
+        <div class="task-right">
+          ${isFree
+            ? canTake
+              ? `<button class="btn-take" onclick="takeTask(${t.id})">Взять задачу</button>`
+              : `<span style="font-size:11px;color:var(--amber)">Выбери себя ←</span>`
+            : `<span class="status-pill ${ST_CLS[t.status]}" onclick="cycleStatus(${t.id},'${t.status}')" title="Нажми — изменить статус">${t.status}</span>`
+          }
+          ${canRelease?`<button class="btn-release" onclick="releaseTask(${t.id})" title="Отказаться от задачи">Отпустить</button>`:''}
+          <button class="del-btn" onclick="deleteTask(${t.id})">✕</button>
+        </div>
+      </div>`;
+    });
+  });
+  list.innerHTML=html;
+}
+
+async function takeTask(id){
+  if(!whoami){toast('Сначала выбери себя в боковой панели',true);return;}
+  try{
+    await api('PATCH',`tasks?id=eq.${id}`,{who:whoami,status:'В работе'});
+    const t=tasks.find(x=>x.id===id);if(t){t.who=whoami;t.status='В работе';}
+    render();renderGoal();toast(`Задача взята! Удачи, ${whoami} 💪`);
+  }catch(e){toast('Ошибка',true);}
+}
+
+async function releaseTask(id){
+  if(!confirm('Отказаться от задачи? Она снова станет свободной.'))return;
+  try{
+    await api('PATCH',`tasks?id=eq.${id}`,{who:null,status:'Новая'});
+    const t=tasks.find(x=>x.id===id);if(t){t.who=null;t.status='Новая';}
+    render();renderGoal();toast('Задача освобождена');
+  }catch(e){toast('Ошибка',true);}
+}
+
+async function cycleStatus(id,cur){
+  const next=STATUSES[(STATUSES.indexOf(cur)+1)%STATUSES.length];
+  try{
+    await api('PATCH',`tasks?id=eq.${id}`,{status:next});
+    const t=tasks.find(x=>x.id===id);if(t)t.status=next;
+    render();renderGoal();renderChart();
+  }catch(e){toast('Ошибка обновления статуса',true);}
+}
+async function deleteTask(id){
+  if(!confirm('Удалить задачу?'))return;
+  try{await api('DELETE',`tasks?id=eq.${id}`);tasks=tasks.filter(x=>x.id!==id);render();renderGoal();renderChart();toast('Задача удалена');}
+  catch(e){toast('Ошибка удаления',true);}
+}
+async function deleteStaff(e,id,name){
+  e.stopPropagation();
+  if(!confirm(`Удалить сотрудника «${name}»?`))return;
+  try{
+    await api('DELETE',`staff?id=eq.${id}`);staff=staff.filter(x=>x.id!==id);
+    if(filWho===name){filWho='all';document.getElementById('si-all').classList.add('active');}
+    if(whoami===name){whoami='';localStorage.removeItem('whoami');}
+    renderWhoami();renderStaff();render();renderGoal();toast(`${name} удалён`);
+  }catch(e){toast('Ошибка удаления сотрудника',true);}
+}
+
+function openTaskModal(){
+  document.getElementById('f-title').value='';document.getElementById('f-note').value='';
+  document.getElementById('f-date').value=today();document.getElementById('f-prio').value='Средний';
+  document.getElementById('task-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('f-title').focus(),50);
+}
+async function saveTask(){
+  const title=document.getElementById('f-title').value.trim();
+  if(!title){document.getElementById('f-title').focus();return;}
+  const body={title,note:document.getElementById('f-note').value.trim(),who:null,cat:document.getElementById('f-cat').value,status:'Новая',priority:document.getElementById('f-prio').value,date:document.getElementById('f-date').value||today()};
+  try{const res=await api('POST','tasks',body);tasks.unshift(res[0]);closeModal('task-modal');render();renderGoal();renderChart();toast('Задача создана ✓');}
+  catch(e){toast('Ошибка сохранения',true);}
+}
+function openStaffModal(){document.getElementById('sf-name').value='';document.getElementById('sf-initials').value='';document.getElementById('staff-modal').classList.add('open');setTimeout(()=>document.getElementById('sf-name').focus(),50);}
+async function saveStaff(){
+  const name=document.getElementById('sf-name').value.trim();const initials=document.getElementById('sf-initials').value.trim().toUpperCase();
+  if(!name||!initials){toast('Заполни имя и инициалы',true);return;}
+  try{const res=await api('POST','staff',{name,initials,color:document.getElementById('sf-color').value});staff.push(res[0]);closeModal('staff-modal');renderWhoami();renderStaff();renderGoal();toast(`${name} добавлен ✓`);}
+  catch(e){toast('Ошибка добавления сотрудника',true);}
+}
+function openGoalModal(){document.getElementById('gf-target').value=goalTarget;document.getElementById('goal-modal').classList.add('open');setTimeout(()=>document.getElementById('gf-target').focus(),50);}
+function saveGoal(){
+  const val=parseInt(document.getElementById('gf-target').value);
+  if(!val||val<1){toast('Введи число больше 0',true);return;}
+  goalTarget=val;localStorage.setItem('goal_target',val);closeModal('goal-modal');renderGoal();toast('Цель обновлена ✓');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function onOverlay(e,id){if(e.target.id===id)closeModal(id);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal('task-modal');closeModal('staff-modal');closeModal('goal-modal');}});
+
+
+// ============ СИНХРОНИЗАЦИЯ СТАТУС ============
+async function loadSyncLog() {
+  try {
+    // Get last sync record per category
+    const res = await api('GET', 'sync_log?order=synced_at.desc&limit=20&select=*');
+    const grid = document.getElementById('sync-status-grid');
+
+    if (!res || !res.length) {
+      grid.innerHTML = '<div class="sync-never">Синхронизация ещё не запускалась</div>';
+      return;
+    }
+
+    // Get latest record per category
+    const seen = {};
+    const latest = [];
+    for (const r of res) {
+      if (!seen[r.category]) { seen[r.category] = true; latest.push(r); }
+    }
+
+    const fmtTime = ts => {
+      const d = new Date(ts);
+      return d.toLocaleDateString('ru-RU', {day:'numeric',month:'short'}) + ' ' +
+             d.toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+    };
+
+    grid.innerHTML = '<div class="sync-grid">' + latest.map(r => `
+      <div class="sync-card">
+        <div class="sync-cat">${r.category}</div>
+        <div class="sync-status">${r.status}</div>
+        <div class="sync-time">${fmtTime(r.synced_at)}</div>
+      </div>`).join('') + '</div>';
+  } catch(e) {
+    document.getElementById('sync-status-grid').innerHTML =
+      '<div class="sync-never">Не удалось загрузить статус</div>';
+  }
+}
+
+// ============ ЕЖЕДНЕВНЫЕ ЗАДАЧИ ============
+
+let dailyTasks = [];   // [{id, name}]
+let dailyChecks = [];  // [{id, task_id, who, check_date}]
+
+const todayDate = () => new Date().toISOString().slice(0, 10);
+
+// Определяем "сегодня" с учётом сброса в 9:00
+function getDailyDate() {
+  const now = new Date();
+  if (now.getHours() < 9) {
+    const prev = new Date(now);
+    prev.setDate(prev.getDate() - 1);
+    return prev.toISOString().slice(0, 10);
+  }
+  return todayDate();
+}
+
+async function loadDaily() {
+  try {
+    const d = getDailyDate();
+    [dailyTasks, dailyChecks] = await Promise.all([
+      api('GET', 'daily_tasks?order=id.asc&select=*'),
+      api('GET', `daily_checks?check_date=eq.${d}&select=*`)
+    ]);
+    renderDaily();
+  } catch(e) { console.error('daily load error', e); }
+}
+
+function renderDaily() {
+  const grid = document.getElementById('daily-grid');
+  if (!dailyTasks.length) {
+    grid.innerHTML = '<div class="daily-empty">Нет ежедневных задач — добавь первую ↑</div>';
+    document.getElementById('daily-progress-lbl').textContent = 'Задач пока нет';
+    document.getElementById('daily-progress-pct').textContent = '';
+    document.getElementById('daily-progress-fill').style.width = '0%';
+    return;
+  }
+
+  const myDone = whoami ? dailyTasks.filter(t =>
+    dailyChecks.some(c => c.task_id === t.id && c.who === whoami)
+  ).length : 0;
+  const myPct = whoami ? Math.round(myDone / dailyTasks.length * 100) : 0;
+
+  if (whoami) {
+    document.getElementById('daily-progress-lbl').textContent = `Выполнено сегодня: ${myDone} из ${dailyTasks.length}`;
+    document.getElementById('daily-progress-pct').textContent = myPct + '%';
+    document.getElementById('daily-progress-fill').style.width = myPct + '%';
+  } else {
+    document.getElementById('daily-progress-lbl').textContent = 'Выбери себя чтобы отмечать';
+    document.getElementById('daily-progress-pct').textContent = '';
+    document.getElementById('daily-progress-fill').style.width = '0%';
+  }
+
+  grid.innerHTML = dailyTasks.map(t => {
+    const doneBy = dailyChecks.filter(c => c.task_id === t.id).map(c => c.who);
+    const iDone = whoami && doneBy.includes(whoami);
+    const allDone = staff.length > 0 && staff.every(s => doneBy.includes(s.name));
+    const whoDots = staff.map(s => {
+      const m = getStaffMeta(s.name);
+      const done = doneBy.includes(s.name);
+      return `<div class="who-dot ${m.cls}${done ? ' done-who' : ''}" title="${s.name}: ${done ? '✓ выполнено' : 'не выполнено'}">${m.ini}</div>`;
+    }).join('');
+    return `<div class="daily-item${allDone ? ' all-done' : ''}">
+      <button class="daily-check${iDone ? ' checked' : ''}" onclick="toggleDailyCheck(${t.id})" ${!whoami ? 'disabled title="Выбери себя"' : 'title="Нажми чтобы отметить"'}>${iDone ? '✓' : ''}</button>
+      <span class="daily-task-name${iDone ? ' done-text' : ''}">${t.name}</span>
+      <div class="daily-who-checks">${whoDots}</div>
+      <button class="daily-del" onclick="deleteDailyTask(${t.id})" title="Удалить задачу">✕</button>
+    </div>`;
+  }).join('');
+}
+
+async function toggleDailyCheck(taskId) {
+  if (!whoami) { toast('Сначала выбери себя в боковой панели', true); return; }
+  const d = getDailyDate();
+  const existing = dailyChecks.find(c => c.task_id === taskId && c.who === whoami);
+  try {
+    if (existing) {
+      await api('DELETE', `daily_checks?id=eq.${existing.id}`);
+      dailyChecks = dailyChecks.filter(c => c.id !== existing.id);
+    } else {
+      const res = await api('POST', 'daily_checks', { task_id: taskId, who: whoami, check_date: d });
+      dailyChecks.push(res[0]);
+    }
+    renderDaily();
+  } catch(e) { toast('Ошибка', true); }
+}
+
+async function resetMyDaily() {
+  if (!whoami) { toast('Сначала выбери себя', true); return; }
+  if (!confirm('Сбросить все свои отметки на сегодня?')) return;
+  try {
+    const d = getDailyDate();
+    await api('DELETE', `daily_checks?who=eq.${encodeURIComponent(whoami)}&check_date=eq.${d}`);
+    dailyChecks = dailyChecks.filter(c => c.who !== whoami);
+    renderDaily();
+    toast('Отметки сброшены');
+  } catch(e) { toast('Ошибка', true); }
+}
+
+function openDailyModal() {
+  document.getElementById('df-name').value = '';
+  document.getElementById('daily-modal').classList.add('open');
+  setTimeout(() => document.getElementById('df-name').focus(), 50);
+}
+
+async function saveDailyTask() {
+  const name = document.getElementById('df-name').value.trim();
+  if (!name) { document.getElementById('df-name').focus(); return; }
+  try {
+    const res = await api('POST', 'daily_tasks', { name });
+    dailyTasks.push(res[0]);
+    closeModal('daily-modal');
+    renderDaily();
+    toast('Задача добавлена ✓');
+  } catch(e) { toast('Ошибка сохранения', true); }
+}
+
+async function deleteDailyTask(id) {
+  if (!confirm('Удалить ежедневную задачу для всей команды?')) return;
+  try {
+    await api('DELETE', `daily_tasks?id=eq.${id}`);
+    dailyTasks = dailyTasks.filter(t => t.id !== id);
+    dailyChecks = dailyChecks.filter(c => c.task_id !== id);
+    renderDaily();
+    toast('Задача удалена');
+  } catch(e) { toast('Ошибка', true); }
+}
+
+// Авто-обновление ежедневных задач каждые 15 сек
+setInterval(loadDaily, 15000);
+setInterval(loadSyncLog, 30000);
+
+// ── ЕЖЕНЕДЕЛЬНЫЕ ЗАДАЧИ ──
+let weeklyTasks = [], weeklyChecks = [];
+
+function getWeekStart() {
+  const d = new Date();
+  const day = d.getDay(); // 0=вс,1=пн...
+  const diff = d.getDate() - (day === 0 ? 6 : day - 1); // пн = начало недели
+  const mon = new Date(d.setDate(diff));
+  return mon.toISOString().slice(0, 10);
+}
+
+async function loadWeekly() {
+  try {
+    const [tasks, checks] = await Promise.all([
+      api('GET', 'weekly_tasks?order=id'),
+      api('GET', `weekly_checks?week_start=eq.${getWeekStart()}`)
+    ]);
+    weeklyTasks = tasks;
+    weeklyChecks = checks;
+    renderWeekly();
+  } catch(e) { console.error('loadWeekly', e); }
+}
+
+function renderWeekly() {
+  const grid = document.getElementById('weekly-grid');
+  if (!grid) return;
+
+  const weekNum = (() => {
+    const d = new Date();
+    const start = new Date(d.getFullYear(), 0, 1);
+    return Math.ceil(((d - start) / 86400000 + start.getDay() + 1) / 7);
+  })();
+  document.getElementById('weekly-meta').textContent = `Неделя ${weekNum} — сбрасываются каждый понедельник`;
+
+  const myDone = whoami ? weeklyTasks.filter(t =>
+    weeklyChecks.some(c => c.task_id === t.id && c.who === whoami)
+  ).length : 0;
+  const myPct = whoami && weeklyTasks.length > 0 ? Math.round(myDone / weeklyTasks.length * 100) : 0;
+
+  if (whoami) {
+    document.getElementById('weekly-progress-lbl').textContent = `Выполнено на этой неделе: ${myDone} из ${weeklyTasks.length}`;
+    document.getElementById('weekly-progress-pct').textContent = myPct + '%';
+    document.getElementById('weekly-progress-fill').style.width = myPct + '%';
+  } else {
+    document.getElementById('weekly-progress-lbl').textContent = 'Выбери себя чтобы отмечать';
+    document.getElementById('weekly-progress-pct').textContent = '';
+    document.getElementById('weekly-progress-fill').style.width = '0%';
+  }
+
+  if (!weeklyTasks.length) {
+    grid.innerHTML = '<div class="weekly-empty">Нет задач — добавь первую ＋</div>';
+    return;
+  }
+
+  grid.innerHTML = weeklyTasks.map(t => {
+    const doneBy = weeklyChecks.filter(c => c.task_id === t.id).map(c => c.who);
+    const iDone = whoami && doneBy.includes(whoami);
+    const allDone = staff.length > 0 && staff.every(s => doneBy.includes(s.name));
+    const whoDots = staff.map(s => {
+      const m = getStaffMeta(s.name);
+      const done = doneBy.includes(s.name);
+      return `<div class="who-dot ${m.cls}${done ? ' done-who' : ''}" title="${s.name}: ${done ? '✓ выполнено' : 'не выполнено'}">${m.ini}</div>`;
+    }).join('');
+    return `<div class="weekly-item${allDone ? ' all-done' : ''}">
+      <button class="weekly-check${iDone ? ' checked' : ''}" onclick="toggleWeeklyCheck(${t.id})" ${!whoami ? 'disabled title="Выбери себя"' : 'title="Нажми чтобы отметить"'}>${iDone ? '✓' : ''}</button>
+      <span class="weekly-task-name${iDone ? ' done-text' : ''}">${t.name}</span>
+      <div class="weekly-who-checks">${whoDots}</div>
+      <button class="weekly-del" onclick="deleteWeeklyTask(${t.id})" title="Удалить задачу">✕</button>
+    </div>`;
+  }).join('');
+}
+
+async function toggleWeeklyCheck(taskId) {
+  if (!whoami) { toast('Сначала выбери себя в боковой панели', true); return; }
+  const w = getWeekStart();
+  const existing = weeklyChecks.find(c => c.task_id === taskId && c.who === whoami);
+  try {
+    if (existing) {
+      await api('DELETE', `weekly_checks?id=eq.${existing.id}`);
+      weeklyChecks = weeklyChecks.filter(c => c.id !== existing.id);
+    } else {
+      const res = await api('POST', 'weekly_checks', { task_id: taskId, who: whoami, week_start: w });
+      weeklyChecks.push(res[0]);
+    }
+    renderWeekly();
+  } catch(e) { toast('Ошибка', true); }
+}
+
+async function resetMyWeekly() {
+  if (!whoami) { toast('Сначала выбери себя', true); return; }
+  if (!confirm('Сбросить все свои отметки на этой неделе?')) return;
+  try {
+    const w = getWeekStart();
+    await api('DELETE', `weekly_checks?who=eq.${encodeURIComponent(whoami)}&week_start=eq.${w}`);
+    weeklyChecks = weeklyChecks.filter(c => c.who !== whoami);
+    renderWeekly();
+    toast('Отметки сброшены');
+  } catch(e) { toast('Ошибка', true); }
+}
+
+function openWeeklyModal() {
+  document.getElementById('wf-name').value = '';
+  document.getElementById('weekly-modal').classList.add('open');
+  setTimeout(() => document.getElementById('wf-name').focus(), 50);
+}
+
+async function saveWeeklyTask() {
+  const name = document.getElementById('wf-name').value.trim();
+  if (!name) { document.getElementById('wf-name').focus(); return; }
+  try {
+    const res = await api('POST', 'weekly_tasks', { name });
+    weeklyTasks.push(res[0]);
+    closeModal('weekly-modal');
+    renderWeekly();
+    toast('Задача добавлена ✓');
+  } catch(e) { toast('Ошибка сохранения', true); }
+}
+
+async function deleteWeeklyTask(id) {
+  if (!confirm('Удалить еженедельную задачу для всей команды?')) return;
+  try {
+    await api('DELETE', `weekly_tasks?id=eq.${id}`);
+    weeklyTasks = weeklyTasks.filter(t => t.id !== id);
+    weeklyChecks = weeklyChecks.filter(c => c.task_id !== id);
+    renderWeekly();
+    toast('Задача удалена');
+  } catch(e) { toast('Ошибка', true); }
+}
+
+// Авто-обновление еженедельных задач каждые 30 сек
+setInterval(loadWeekly, 30000);
+
+loadAll();
+loadDaily();
+loadWeekly();
+loadSyncLog();
+
+  // ── Ручной запуск синхронизации ──
+  async function triggerSync() {
+    const btn = document.getElementById('sync-now-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Запускаю...';
+    try {
+      const resp = await fetch('http://localhost:5055/sync', {method:'POST'});
+      if (resp.status === 409) {
+        btn.textContent = '⚡ Уже идёт...';
+        setTimeout(() => { btn.textContent = '⚡ Синхронизировать сейчас'; btn.disabled = false; }, 3000);
+        return;
+      }
+      btn.textContent = '✅ Запущено!';
+      // Через 5 сек обновляем статус
+      setTimeout(() => loadSyncLog(), 5000);
+      // Опрашиваем пока не закончится
+      const poll = setInterval(async () => {
+        try {
+          const s = await fetch('http://localhost:5055/status');
+          const d = await s.json();
+          if (!d.running) {
+            clearInterval(poll);
+            btn.textContent = '⚡ Синхронизировать сейчас';
+            btn.disabled = false;
+            loadSyncLog();
+          } else {
+            btn.textContent = '⏳ Идёт синхронизация...';
+          }
+        } catch { clearInterval(poll); btn.textContent = '⚡ Синхронизировать сейчас'; btn.disabled = false; }
+      }, 3000);
+    } catch(e) {
+      btn.textContent = '❌ Скрипт не запущен';
+      setTimeout(() => { btn.textContent = '⚡ Синхронизировать сейчас'; btn.disabled = false; }, 4000);
+    }
+  }
+</script>
+</body>
+</html>
